@@ -71,12 +71,14 @@ const testControll = async (req, res) => {
                 return res.send({ status: 200, response: decrypt });
 
             } else {
-                return res.send({ status: 400, response: decrypt });
+                return res.send({ status: 500, response: decrypt });
             }
+        }else{
+            return res.send("dammal")
         }
 
     } catch (error) {
-        return res.send({ stauts: 400, response: error })
+        return res.send({ stauts: 800, response: error })
     }
 }
 
