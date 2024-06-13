@@ -48,6 +48,7 @@ const testControll = async (req, res) => {
             if (Object.keys(input).length === 0) {
                 return res.send({ status: 400, response: "Invalid Data" })
             }
+            
             const requestId = input.RequestID;
             const requestIdPrefix = requestId.substring(0, requestId.indexOf("_"));
             const modifiedPayload = { ...input, RequestID: requestIdPrefix };
