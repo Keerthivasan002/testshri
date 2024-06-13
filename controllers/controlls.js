@@ -1,17 +1,18 @@
 const crypto = require("crypto")
 const decryptData = (data) => {
     try {
-        const key = Buffer.from(process.env.CRYPTO_E_KEY, 'utf8');
-        const iv = Buffer.from(process.env.CRYPTO_E_IV, 'utf8');
-        const encryptedData = Buffer.from(data, 'base64');
-        const decipher = crypto.createDecipheriv(process.env.ALGO, key, iv);
-        let decrypt = decipher.update(encryptedData, 'base64', 'utf8');
-        decrypt += decipher.final('utf8');
-        return decrypt;
+      const key = Buffer.from(process.env.CRYPTO_KEY, 'utf8');
+      const iv = Buffer.from(process.env.CRYPTO_IV, 'utf8');
+      const encryptedData = Buffer.from(data, 'base64');
+      const decipher = crypto.createDecipheriv(process.env.ALGO, key, iv);
+      let decrypt = decipher.update(encryptedData, 'base64', 'utf8');
+      decrypt += decipher.final('utf8');
+      return decrypt;
     } catch (error) {
-        console.log(`Error in decryptData - ${error}`);
+      console.log(`Error in decryptData - ${error}`);
     }
-};
+  };
+  
 
 const encryptData = (input) => {
     try {
@@ -94,8 +95,6 @@ const dummyControll = async (req, res) => {
             })
         })
         token = await token.json()
-        let testData = encryptData(token.username);
-        testData = decryptData(testData)
         let user = await fetch('https://dummyjson.com/auth/me', {
             method: 'GET',
             headers: {
