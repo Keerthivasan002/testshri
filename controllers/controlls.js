@@ -1,18 +1,18 @@
 const crypto = require("crypto")
 const decryptData = (data) => {
     try {
-      const key = Buffer.from(process.env.CRYPTO_KEY, 'utf8');
-      const iv = Buffer.from(process.env.CRYPTO_IV, 'utf8');
-      const encryptedData = Buffer.from(data, 'base64');
-      const decipher = crypto.createDecipheriv(process.env.ALGO, key, iv);
-      let decrypt = decipher.update(encryptedData, 'base64', 'utf8');
-      decrypt += decipher.final('utf8');
-      return decrypt;
+        const key = Buffer.from(process.env.CRYPTO_KEY, 'utf8');
+        const iv = Buffer.from(process.env.CRYPTO_IV, 'utf8');
+        const encryptedData = Buffer.from(data, 'base64');
+        const decipher = crypto.createDecipheriv(process.env.ALGO, key, iv);
+        let decrypt = decipher.update(encryptedData, 'base64', 'utf8');
+        decrypt += decipher.final('utf8');
+        return decrypt;
     } catch (error) {
-      console.log(`Error in decryptData - ${error}`);
+        console.log(`Error in decryptData - ${error}`);
     }
-  };
-  
+};
+
 
 const encryptData = (input) => {
     try {
@@ -33,7 +33,7 @@ const testControll = async (req, res) => {
             "name": "Services",
             "pwd": "998"
         };
-        const fetchApi = await fetch(
+        fetch(
             `http://cossvr.novactech.in/ServiceGateway/auth`,
             {
                 method: 'POST',
@@ -42,9 +42,8 @@ const testControll = async (req, res) => {
                 },
                 body: JSON.stringify(fixedPayload)
             }
-        );
-        if (fetchApi) {
-            let data = await fetchApi.text()
+        ).then(async (resToken) => {
+            let data = await resToken.text()
             const input = req.body;
             if (Object.keys(input).length === 0) {
                 return res.send({ status: 400, response: "Invalid Data" })
@@ -52,9 +51,9 @@ const testControll = async (req, res) => {
             const requestId = input.RequestID;
             const requestIdPrefix = requestId.substring(0, requestId.indexOf("_"));
             const modifiedPayload = { ...input, RequestID: requestIdPrefix };
-            const encryptInput = await encryptData(JSON.stringify(modifiedPayload))
+            const encryptInput = encryptData(JSON.stringify(modifiedPayload))
             const payload = { req: encryptInput }
-            const updateInput = await fetch(
+            fetch(
                 `https://cossvr.novactech.in/ServiceGateway/RaiseMyRequest/DepositStatusUpdation`,
                 {
                     method: 'POST',
@@ -64,20 +63,24 @@ const testControll = async (req, res) => {
                     },
                     body: JSON.stringify(payload)
                 }
-            )
-            const final = await updateInput.text()
-            const decrypt = decryptData(final)
-            const parsedData = JSON.parse(decrypt);
-            if (parsedData.statusCode === "200") {
-                return res.send({ status: 200, response: decrypt });
+            ).then(async (resUser) => {
+                const final = await resUser.text()
+                const decrypt = decryptData(final)
+                const parsedData = JSON.parse(decrypt);
+                if (parsedData.statusCode === "200") {
+                    return res.send({ status: 200, response: decrypt });
 
-            } else {
-                return res.send({ status: 500, response: decrypt });
-            }
-        }else{
-            return res.send("dammal")
-        }
-
+                } else {
+                    return res.send({ status: 500, response: decrypt });
+                }
+            }).catch(err => {
+                console.log(err);
+                return res.send({ status: 11, response: err })
+            })
+        }).catch(err => {
+            console.log(err);
+            return res.send({ status: 12, response: err })
+        })
     } catch (error) {
         return res.send({ stauts: 800, response: error })
     }
