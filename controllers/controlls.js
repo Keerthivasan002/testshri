@@ -1,8 +1,8 @@
-const  crypto = require("crypto") 
+const crypto = require("crypto")
 const decryptData = (data) => {
     try {
-        const key = Buffer.from(process.env.CRYPTO_KEY, 'utf8');
-        const iv = Buffer.from(process.env.CRYPTO_IV, 'utf8');
+        const key = Buffer.from(process.env.CRYPTO_E_KEY, 'utf8');
+        const iv = Buffer.from(process.env.CRYPTO_E_IV, 'utf8');
         const encryptedData = Buffer.from(data, 'base64');
         const decipher = crypto.createDecipheriv(process.env.ALGO, key, iv);
         let decrypt = decipher.update(encryptedData, 'base64', 'utf8');
@@ -25,7 +25,7 @@ const encryptData = (input) => {
         console.log(`Error in encryptData - ${error}`);
     }
 };
- const testControll = async (req, res) => {
+const testControll = async (req, res) => {
     try {
 
         const fixedPayload = {
@@ -45,8 +45,8 @@ const encryptData = (input) => {
         if (fetchApi) {
             let data = await fetchApi.text()
             const input = req.body;
-            if(Object.keys(input).length === 0){
-                return res.send({status:400,response:"Invalid Data"})
+            if (Object.keys(input).length === 0) {
+                return res.send({ status: 400, response: "Invalid Data" })
             }
             const requestId = input.RequestID;
             const requestIdPrefix = requestId.substring(0, requestId.indexOf("_"));
@@ -76,8 +76,36 @@ const encryptData = (input) => {
         }
 
     } catch (error) {
-        return res.send({stauts:400,response:error})
+        return res.send({ stauts: 400, response: error })
     }
 }
 
-module.exports = {testControll}
+const dummyControll = async (req, res) => {
+    try {
+        let token = await fetch('https://dummyjson.com/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: 'emilys',
+                password: 'emilyspass',
+                expiresInMins: 30,
+            })
+        })
+        token = await token.json()
+        let testData = encryptData(token.username);
+        testData = decryptData(testData)
+        let user = await fetch('https://dummyjson.com/auth/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token.token}`,
+            },
+        })
+        user = await user.json()
+        return res.send(user)
+    } catch (error) {
+        return res.send(error)
+    }
+}
+
+module.exports = { testControll, dummyControll }
